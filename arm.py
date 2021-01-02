@@ -1,10 +1,6 @@
 import numpy as np
 from math import acos, sin,cos, sqrt,tan,atan2
-from numpy.core.defchararray import decode, join
-from numpy.core.fromnumeric import squeeze
-from numpy.lib.arraypad import _set_reflect_both
 
-from numpy.lib.function_base import select
 
 
 
@@ -134,6 +130,4 @@ class Manipulator:
         ])
         self.gravityMatix = gravityMatrix
         pass
-
-
 
