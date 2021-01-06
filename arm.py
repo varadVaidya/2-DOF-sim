@@ -1,8 +1,8 @@
 import numpy as np
 from math import acos, sin,cos, sqrt,tan,atan2
+from numpy.lib.function_base import select
 
-
-
+from numpy.lib.polynomial import polyder
 
 #########################
 ##      MANIPULATOR CLASS FOR 2 DOF SERIAL MANIPULATOR   ##
@@ -25,19 +25,40 @@ class Manipulator:
 
 
         ### JOINT VECTOR OF THE ROBOT.
-        self.jointAngle1 = None
-        self.jointAngle2 = None
+        ### ZERP<ZERO is set as the home position
+        self.jointAngle1 = 0    #rads
+        self.jointAngle2 = 0    #rads
+
+
+        ### Joint VELOCITY VECTOR
+        ### a numpy array of sixe 1*2
+        self.jointVelocity = np.array([0,0])
+
+        ### Joint Acceleration Vector
+        ###  ### a numpy array of sixe 1*2
+
+        self.jointAccel = np.array([0,0])
+
+
+        ### both velocity and acceleration are set to zero at the initial state...
+
 
         ### CURRENT END EFFECOTR POSITION
         self.endEffectorPosition = None
-
+        self.getForwardKinematics()
         #### CURRENT JACOBIAN MATRIX
         self.Jacobian = None
+        self.getJacobian()
 
         #### Current Mass Matrix
         self.massMatrix = None
+        self.getMassMatrix()
+
+        self.coriolisMatrix = None
+        self.coriolisMatrix = self.getCoriolisMatrix()
         #### Torques to conteract gravity
         self.gravityMatix = None
+        self.getGravityMatix()
 
 
     def getForwardKinematics(self):
@@ -114,6 +135,26 @@ class Manipulator:
         self.massMatrix = massMatrix
         pass
     
+
+    def getCoriolisMatrix(self):
+        """
+        sets the value of corilios forces matrix to use in the dynamic model
+
+        """
+        
+
+        C11 = -self.linkmass2 * self.linklength1 * self.linklength2 * sin(self.jointAngle2) * (2 * self.jointVelocity[0] * self.jointVelocity[1] + \
+                                                                                                                            pow(self.jointVelocity[1],2))
+
+        C12 = self.linkmass2 * self.linklength1 * self.linklength2 * pow (self.jointVelocity[0],2) * sin(self.jointAngle2)
+
+        coriolisMatrix = np.array([C11,C12])
+
+        self.coriolisMatrix = coriolisMatrix
+
+        pass
+
+
     def getGravityMatix(self):
         """
         returns the vector containing the gravitational torques.
@@ -124,10 +165,37 @@ class Manipulator:
         
         G21 = self.linkmass2 * self.gravity * self.linklength2 * cos(self.jointAngle1 + self.jointAngle2)
 
-        gravityMatrix = np.array([
-            [G11],
-            [G21]
-        ])
+        gravityMatrix = np.array([G11,G21  ])
         self.gravityMatix = gravityMatrix
         pass
 
+if __name__ == "__main__": 
+
+    Arm = Manipulator()
+    Arm.jointAngle1,Arm.jointAngle2 = np.pi/6, -np.pi/4 
+    Arm.getForwardKinematics()
+    Arm.getJacobian()
+    Arm.getMassMatrix()
+    Arm.getGravityMatix()
+
+    print ("Testing the math")
+    print("The current end effector config is: ", Arm.endEffectorPosition)
+
+    print("The current Jacobian is: ", Arm.Jacobian)
+    print("The current Mass Matrix is: ", Arm.massMatrix)
+    print("The current gravity is: ", Arm.gravityMatix)
+
+
+
+    ### assume the force applied by the end effector is:
+    Ftip = np.array([1,1])
+
+    ## thus the torque required to generate the force will be:
+
+    ## So the basic force control can be applied as:
+    torque = Arm.gravityMatix + np.dot( Arm.Jacobian.T , Ftip)
+
+    print(torque)
+    ### Setting up the manip.
+
+    
