@@ -42,6 +42,9 @@ class Manipulator:
 
         ### both velocity and acceleration are set to zero at the initial state...
 
+        ### SET THE TORQUE OF THE JOINTS
+        
+        self.jointTorque = np.array([0,0])
 
         ### CURRENT END EFFECOTR POSITION
         self.endEffectorPosition = None
@@ -55,10 +58,21 @@ class Manipulator:
         self.getMassMatrix()
 
         self.coriolisMatrix = None
-        self.coriolisMatrix = self.getCoriolisMatrix()
+        self.getCoriolisMatrix()
         #### Torques to conteract gravity
         self.gravityMatix = None
         self.getGravityMatix()
+        
+        
+        
+        ############
+        ### Stuff for impedance control
+        ############
+        Kx = [20,20]
+        self.matrix_KX = np.diag(np.array(Kx))
+        
+        Kv = [8,8]
+        self.matrix_KV = np.diag(np.array(Kv))
 
 
     def getForwardKinematics(self):
