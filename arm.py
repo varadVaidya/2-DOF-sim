@@ -1,8 +1,7 @@
 import numpy as np
 from math import acos, sin,cos, sqrt,tan,atan2
-from numpy.lib.function_base import select
-
-from numpy.lib.polynomial import polyder
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 #########################
 ##      MANIPULATOR CLASS FOR 2 DOF SERIAL MANIPULATOR   ##
@@ -68,10 +67,10 @@ class Manipulator:
         ############
         ### Stuff for impedance control
         ############
-        Kx = [20,20]
+        Kx = [4,4]
         self.matrix_KX = np.diag(np.array(Kx))
         
-        Kv = [8,8]
+        Kv = [1,1]
         self.matrix_KV = np.diag(np.array(Kv))
 
 
@@ -182,6 +181,55 @@ class Manipulator:
         gravityMatrix = np.array([G11,G21  ])
         self.gravityMatix = gravityMatrix
         pass
+    
+    
+    
+    
+    def plotStuff(self,storageMatrix,time):
+        
+        dt = 0.01
+        jointAngles = storageMatrix[:,0:2]
+        x1 = self.linklength1* np.cos(jointAngles[:,0])
+        y1 = self.linklength1*np.sin(jointAngles[:,0])
+
+        x2 = self.linklength1 * np.cos(jointAngles[:,0]) + self.linklength2 * np.cos(jointAngles[:,0] + jointAngles[:,1])
+        y2 = self.linklength1 * np.sin(jointAngles[:,0]) + self.linklength2 * np.sin(jointAngles[:,0] + jointAngles[:,1])
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, autoscale_on=False, xlim=(-2.5, 2.5), ylim=(-2.5, 2.5))
+        ax.set_aspect('equal')
+        ax.grid()
+
+        line, = ax.plot([], [], 'o-', lw=2)
+        time_template = 'time = %.1fs'
+        time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+        
+        
+
+
+        def init():
+            line.set_data([], [])
+            time_text.set_text('')
+            return line, time_text
+
+
+        def animate(i):
+            thisx = [0, x1[i], x2[i]]
+            thisy = [0, y1[i], y2[i]]
+
+            line.set_data(thisx, thisy)
+            time_text.set_text(time_template % (i*dt))
+            return line, time_text
+
+
+        # plt.plot(time,storageMatrix[:,6])
+        # plt.plot(time,storageMatrix[:,6])
+        
+        
+        
+        ani = animation.FuncAnimation(fig, animate, range(1, len(jointAngles)),
+                                   interval=dt*1000, blit=True, init_func=init)
+        plt.show()
 
 if __name__ == "__main__": 
 
